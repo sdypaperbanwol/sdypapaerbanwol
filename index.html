@@ -74,27 +74,24 @@ document.addEventListener("DOMContentLoaded", function () {
   const subSelect = document.getElementById("subcategory");
   const sizeSelect = document.getElementById("size");
   const msgDiv = document.getElementById("msg");
+  const quantityInput = document.getElementById("quantity");
+  const remarksInput = document.getElementById("remarks");
   let items = {};
 
-  // 1) 물품 리스트 가져오기
   fetch("https://script.google.com/macros/s/AKfycbxtGSQZm-xP5bJB1Hy_57uafyKA67yPNzYiXMGEGyOmvAEEr5x5xmsCaSmP49Rka84S/exec")
     .then(res => res.json())
     .then(data => {
       items = data;
-      populateCategory();
+      categorySelect.innerHTML = '<option value="">-- 선택하세요 --</option>';
+      Object.keys(items).forEach(cat => {
+        categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
     })
     .catch(err => {
       console.error("데이터 로드 실패", err);
       msgDiv.textContent = "물품 데이터 로드 실패!";
       msgDiv.style.color = "red";
     });
-
-  function populateCategory() {
-    categorySelect.innerHTML = '<option value="">-- 선택하세요 --</option>';
-    Object.keys(items).forEach(cat => {
-      categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-    });
-  }
 
   categorySelect.addEventListener("change", () => {
     const category = categorySelect.value;
@@ -130,14 +127,10 @@ document.addEventListener("DOMContentLoaded", function () {
   sizeSelect.addEventListener("change", () => {
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
-
-    if (currentStock === 0) {
-      msgDiv.textContent = "⚠️ 현재 재고가 없습니다. 신청 시 구매 요청으로 접수됩니다.";
-      msgDiv.style.color = "#d17d00";
-    } else {
-      msgDiv.textContent = "";
-      msgDiv.style.color = "green";
-    }
+    msgDiv.textContent = currentStock === 0
+      ? "⚠️ 현재 재고가 없습니다. 신청 시 구매 요청으로 접수됩니다."
+      : "";
+    msgDiv.style.color = currentStock === 0 ? "#d17d00" : "green";
   });
 
   document.getElementById("materialForm").addEventListener("submit", function(e) {
@@ -145,18 +138,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
-    const quantity = parseInt(document.getElementById("quantity").value, 10) || 0;
-    const remarksInput = document.getElementById("remarks");
+    const requestedQty = parseInt(quantityInput.value, 10) || 0;
     let remarksText = remarksInput.value.trim();
 
-    // ✅ 재고 부족 시: 비고 자동추가 + alert + 저장 중단
-    if (currentStock === 0 || quantity > currentStock) {
-      if (!remarksText.includes("구매 요청")) {
-        remarksText += (remarksText.length > 0 ? " / " : "") + "구매 요청";
+    // ✅ 구매 요청 조건 처리
+    if (requestedQty > currentStock) {
+      const diff = requestedQty - currentStock;
+      const requestNote = `${diff}개 구매 요청`;
+
+      if (!remarksText.includes(requestNote)) {
+        remarksText += (remarksText.length > 0 ? " / " : "") + requestNote;
         remarksInput.value = remarksText;
       }
-      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 수량을 줄이거나 비고에 구매 요청 사유를 남겨주세요.`);
-      return;
+
+      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. ${diff}개 구매 요청으로 접수됩니다.`);
+      return; // ❌ 저장 중단
     }
 
     const formData = new FormData(this);
@@ -183,7 +179,6 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error(err);
     });
   });
-
 });
 </script>
 
