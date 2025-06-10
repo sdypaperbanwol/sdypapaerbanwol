@@ -76,8 +76,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgDiv = document.getElementById("msg");
   let items = {};
 
-  // 1) 물품 리스트 가져오기
-  fetch("https://script.google.com/macros/s/AKfycbxtGSQZm-xP5bJB1Hy_57uafyKA67yPNzYiXMGEGyOmvAEEr5x5xmsCaSmP49Rka84S/exec")  // ← 배포된 스크립트 주소로 교체
+  // 물품 리스트 불러오기
+  fetch("https://script.google.com/macros/s/AKfycbxtGSQZm-xP5bJB1Hy_57uafyKA67yPNzYiXMGEGyOmvAEEr5x5xmsCaSmP49Rka84S/exec")
     .then(res => res.json())
     .then(data => {
       items = data;
@@ -96,7 +96,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 대분류 → 세부종류
   categorySelect.addEventListener("change", () => {
     const category = categorySelect.value;
     subSelect.innerHTML = "<option value=''>-- 선택하세요 --</option>";
@@ -111,7 +110,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // 세부종류 → 사이즈(재고 표시 & 경고 메시지)
   subSelect.addEventListener("change", () => {
     const category = categorySelect.value;
     const selectedType = subSelect.value;
@@ -132,34 +130,36 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // 재고 없을 때 경고 메시지 표시 (사이즈 선택 후)
   sizeSelect.addEventListener("change", () => {
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
 
     if (currentStock === 0) {
       msgDiv.textContent = "⚠️ 현재 재고가 없습니다. 신청 시 구매 요청으로 접수됩니다.";
-      msgDiv.style.color = "#d17d00"; // 노란 주황색
+      msgDiv.style.color = "#d17d00";
     } else {
       msgDiv.textContent = "";
       msgDiv.style.color = "green";
     }
   });
 
-  // 2) 폼 제출
   document.getElementById("materialForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    const sizeSelect = document.getElementById("size");
+    // ✅ 여기서 category 없으면 전송 차단
+    if (!categorySelect.value) {
+      msgDiv.textContent = "물품 종류를 선택해주세요.";
+      msgDiv.style.color = "red";
+      return;
+    }
+
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
-
     const remarksInput = document.getElementById("remarks");
     let remarksText = remarksInput.value.trim();
 
-    // 재고 0이면 '구매 요청' 문구 자동 추가
-    if(currentStock === 0){
-      if(remarksText.length > 0){
+    if (currentStock === 0) {
+      if (remarksText.length > 0) {
         remarksText += " / 구매 요청";
       } else {
         remarksText = "구매 요청";
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .then(res => res.json())
     .then(data => {
-      if(data.result === "success") {
+      if (data.result === "success") {
         msgDiv.textContent = "신청이 저장되었습니다!";
         msgDiv.style.color = "green";
         this.reset();
@@ -191,7 +191,6 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error(err);
     });
   });
-
 });
 </script>
 
