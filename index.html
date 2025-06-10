@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>자재창고 물품 관리(시화)</title>
+  <title>자재창고 물품 관리(반월)</title>
   <style>
     form {
       display: flex;
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgDiv = document.getElementById("msg");
   let items = {};
 
-  // 물품 리스트 불러오기
+  // 물품 리스트 가져오기
   fetch("https://script.google.com/macros/s/AKfycbxtGSQZm-xP5bJB1Hy_57uafyKA67yPNzYiXMGEGyOmvAEEr5x5xmsCaSmP49Rka84S/exec")
     .then(res => res.json())
     .then(data => {
@@ -101,7 +101,6 @@ document.addEventListener("DOMContentLoaded", function () {
     subSelect.innerHTML = "<option value=''>-- 선택하세요 --</option>";
     sizeSelect.innerHTML = "<option value=''>-- 선택하세요 --</option>";
     msgDiv.textContent = "";
-    msgDiv.style.color = "green";
 
     if (items[category]) {
       items[category].types.forEach(type => {
@@ -115,11 +114,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectedType = subSelect.value;
     sizeSelect.innerHTML = "<option value=''>-- 선택하세요 --</option>";
     msgDiv.textContent = "";
-    msgDiv.style.color = "green";
 
     if (items[category]) {
       const stockMap = items[category].stockMap;
-
       Object.entries(stockMap).forEach(([key, stock]) => {
         const [type, size] = key.split("__");
         if (type === selectedType) {
@@ -139,25 +136,28 @@ document.addEventListener("DOMContentLoaded", function () {
       msgDiv.style.color = "#d17d00";
     } else {
       msgDiv.textContent = "";
-      msgDiv.style.color = "green";
     }
   });
 
   document.getElementById("materialForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    // ✅ 여기서 category 없으면 전송 차단
-    if (!categorySelect.value) {
-      msgDiv.textContent = "물품 종류를 선택해주세요.";
-      msgDiv.style.color = "red";
-      return;
-    }
-
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
+
+    const quantityInput = document.getElementById("quantity");
+    const requestedQuantity = parseInt(quantityInput.value, 10) || 0;
+
     const remarksInput = document.getElementById("remarks");
     let remarksText = remarksInput.value.trim();
 
+    // ✅ 초과 수량 신청 제한
+    if (currentStock > 0 && requestedQuantity > currentStock) {
+      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 신청 수량을 줄이거나 비고란에 구매 요청 사유를 작성해주세요.`);
+      return;
+    }
+
+    // ✅ 재고 0이면 구매 요청 자동 추가
     if (currentStock === 0) {
       if (remarksText.length > 0) {
         remarksText += " / 구매 요청";
