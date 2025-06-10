@@ -152,20 +152,24 @@ document.addEventListener("DOMContentLoaded", function () {
     let remarksText = remarksInput.value.trim();
 
     // ✅ 초과 수량 신청 제한
-    if (currentStock > 0 && requestedQuantity > currentStock) {
-      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 신청 수량을 줄이거나 비고란에 구매 요청 사유를 작성해주세요.`);
-      return;
+    // ✅ 초과 수량 신청 제한 및 비고 자동 추가
+if (currentStock === 0 || requestedQuantity > currentStock) {
+  if (!remarksText.includes("구매 요청")) {
+    if (remarksText.length > 0) {
+      remarksText += " / 구매 요청";
+    } else {
+      remarksText = "구매 요청";
     }
+    remarksInput.value = remarksText;
+  }
 
-    // ✅ 재고 0이면 구매 요청 자동 추가
-    if (currentStock === 0) {
-      if (remarksText.length > 0) {
-        remarksText += " / 구매 요청";
-      } else {
-        remarksText = "구매 요청";
-      }
-      remarksInput.value = remarksText;
-    }
+  if (requestedQuantity > currentStock) {
+    alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 신청 수량을 줄이거나 비고란에 구매 요청 사유가 자동 추가됩니다.`);
+  }
+
+  // 재고가 0이면 아래 진행, 초과는 계속 진행
+}
+
 
     const formData = new FormData(this);
 
