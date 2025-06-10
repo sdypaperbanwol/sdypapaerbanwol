@@ -142,18 +142,21 @@ document.addEventListener("DOMContentLoaded", function () {
     let remarksText = remarksInput.value.trim();
 
     // ✅ 구매 요청 조건 처리
-    if (requestedQty > currentStock) {
-      const diff = requestedQty - currentStock;
-      const requestNote = `${diff}개 구매 요청`;
+if (requestedQty > currentStock) {
+  const diff = requestedQty - currentStock;
+  const requestNote = `${diff}개 구매 요청`;
 
-      if (!remarksText.includes(requestNote)) {
-        remarksText += (remarksText.length > 0 ? " / " : "") + requestNote;
-        remarksInput.value = remarksText;
-      }
+  if (!remarksText.includes(requestNote)) {
+    remarksText += (remarksText.length > 0 ? " / " : "") + requestNote;
+    remarksInput.value = remarksText;
+  }
 
-      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. ${diff}개 구매 요청으로 접수됩니다.`);
-      return; // ❌ 저장 중단
-    }
+  alert(`⚠️ 현재 재고는 ${currentStock}개입니다. ${diff}개 구매 요청으로 접수됩니다.\n수량을 재고(${currentStock})에 맞춰 조정합니다.`);
+  
+  quantityInput.value = currentStock;  // ✅ 수량도 자동 조정
+
+  return; // ❌ 저장 중단
+}
 
     const formData = new FormData(this);
 
