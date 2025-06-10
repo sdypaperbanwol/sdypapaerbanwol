@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>자재창고 물품 관리(반월)</title>
+  <title>자재창고 물품 관리(시화)</title>
   <style>
     form {
       display: flex;
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgDiv = document.getElementById("msg");
   let items = {};
 
-  // 물품 리스트 가져오기
+  // 1) 물품 리스트 가져오기
   fetch("https://script.google.com/macros/s/AKfycbxtGSQZm-xP5bJB1Hy_57uafyKA67yPNzYiXMGEGyOmvAEEr5x5xmsCaSmP49Rka84S/exec")
     .then(res => res.json())
     .then(data => {
@@ -136,6 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
       msgDiv.style.color = "#d17d00";
     } else {
       msgDiv.textContent = "";
+      msgDiv.style.color = "green";
     }
   });
 
@@ -144,32 +145,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const selectedOption = sizeSelect.selectedOptions[0];
     const currentStock = parseInt(selectedOption?.dataset.stock || "0", 10);
-
-    const quantityInput = document.getElementById("quantity");
-    const requestedQuantity = parseInt(quantityInput.value, 10) || 0;
-
+    const quantity = parseInt(document.getElementById("quantity").value, 10) || 0;
     const remarksInput = document.getElementById("remarks");
     let remarksText = remarksInput.value.trim();
 
-    // ✅ 초과 수량 신청 제한
-    // ✅ 초과 수량 신청 제한 및 비고 자동 추가
-if (currentStock === 0 || requestedQuantity > currentStock) {
-  if (!remarksText.includes("구매 요청")) {
-    if (remarksText.length > 0) {
-      remarksText += " / 구매 요청";
-    } else {
-      remarksText = "구매 요청";
+    // ✅ 재고 부족 시: 비고 자동추가 + alert + 저장 중단
+    if (currentStock === 0 || quantity > currentStock) {
+      if (!remarksText.includes("구매 요청")) {
+        remarksText += (remarksText.length > 0 ? " / " : "") + "구매 요청";
+        remarksInput.value = remarksText;
+      }
+      alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 수량을 줄이거나 비고에 구매 요청 사유를 남겨주세요.`);
+      return;
     }
-    remarksInput.value = remarksText;
-  }
-
-  if (requestedQuantity > currentStock) {
-    alert(`⚠️ 현재 재고는 ${currentStock}개입니다. 신청 수량을 줄이거나 비고란에 구매 요청 사유가 자동 추가됩니다.`);
-  }
-
-  // 재고가 0이면 아래 진행, 초과는 계속 진행
-}
-
 
     const formData = new FormData(this);
 
@@ -179,7 +167,7 @@ if (currentStock === 0 || requestedQuantity > currentStock) {
     })
     .then(res => res.json())
     .then(data => {
-      if (data.result === "success") {
+      if(data.result === "success") {
         msgDiv.textContent = "신청이 저장되었습니다!";
         msgDiv.style.color = "green";
         this.reset();
@@ -195,6 +183,7 @@ if (currentStock === 0 || requestedQuantity > currentStock) {
       console.error(err);
     });
   });
+
 });
 </script>
 
